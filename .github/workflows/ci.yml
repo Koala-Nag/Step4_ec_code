@@ -1,0 +1,218 @@
+# ============================================================
+# CI（設計仕様書 10.4）
+#
+# ★順番が意味を持つ。安いものから先に落とす。
+#   DBもサーバも要らない検査を上に置くと、間違いに気づくまでの時間が短くなる。
+#   逆にすると「10分待ってから SQL の1行で落ちる」ことになる。
+#
+# ★「回す」だけでは足りない。落とす。
+#   重大（high 以上）が1件でも出たら失敗させる。シークレット検出が当たったら同じ。
+#   ★それを確かめるのが SEC-906（わざと脆弱な版を入れて、マージできないこと）。
+#
+# ★この repo の根は ec/（09-10 決定）。文書は別の repo。
+# 手元で同じ順に流す：bash scripts/ci-local.sh
+# ============================================================
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # ----------------------------------------------------------
+  # すべての push で回す。DBを立てない段だけ
+  # ----------------------------------------------------------
+  fast:
+    name: 静的検査と単体テスト
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # ★gitleaks が全履歴を見るため（2.5.1）
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # --- 1. SQLファイルの文字集合（いちばん先。数秒で終わる）-----
+      # SET NAMES が無いと latin1 で格納され、往復すると正しく見える。
+      # 目視では絶対に気づけないので、機械が見る（R-07 で実際に踏んだ）
+      - name: 1. SQLの先頭2行
+        working-directory: .
+        run: bash db/check_sql_header.sh
+
+      # --- 2. 単体テスト（DBを立てない）---------------------------
+      - name: 依存を入れる（バックエンド）
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: 2a. pytest（domain/ のみ）
+        working-directory: backend
+        run: python -m pytest
+
+      - name: 依存を入れる（フロント）
+        working-directory: frontend
+        run: npm ci
+
+      - name: 2b. jest
+        working-directory: frontend
+        run: npm test
+
+      # --- 3. 型の生成が最新か -------------------------------------
+      # ★手で schema.d.ts を直す経路を塞ぐ。R-13 で「本当に効くか」を確かめてある
+      - name: 3. OpenAPI から型を生成し直して差分を見る
+        run: |
+          cd backend
+          python -m uvicorn main:app --port 8000 &
+          cd ../frontend
+          npx wait-on http://127.0.0.1:8000/openapi.json -t 60000
+          npm run gen:api
+          git diff --exit-code lib/api/schema.d.ts
+
+      # --- 4. 型検査 ------------------------------------------------
+      - name: 4. tsc --noEmit
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      # --- 5. N-39 依存の脆弱性 ＋ シークレット検出 -----------------
+      # ★high 以上が1件でも出たら落とす（10.4）。continue-on-error を付けない
+      - name: 5a. pip-audit
+        working-directory: backend
+        run: python -m pip_audit -r requirements.txt --strict
+
+      # ★閾値は緩めない（--audit-level=critical にしない）。
+      #   据え置きにするものを1件ずつ名指しし、期限を付ける（10.3・9.4a・R-21 の回答2）。
+      #   ★期限を過ぎたら、除外そのものが失敗になる
+      - name: 5b. npm audit（据え置きは期限つき）
+        run: python scripts/check_npm_audit.py
+
+      - name: 5c. gitleaks（全履歴）
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- 6. N-15 ログ出力の静的検査 -------------------------------
+      # 8.6「出力の入口を1つの関数にする」を、機械で確かめる
+      - name: 6. ログ出力が applog を通っているか
+        run: python scripts/check_no_direct_log.py
+
+      # --- 7. 10.2.11 エラーコードの表と実装の突き合わせ ------------
+      # 8.2 の表（docs/error-codes.md に写し）と core/errors.py の、どちらか片方にしか無いコードで落とす
+      - name: 7. エラーコードが 8.2 の表と一致しているか
+        run: python scripts/check_error_codes.py
+
+  # ----------------------------------------------------------
+  # ★台帳の照合（2.2.1a・R-24 の回答2）
+  #
+  #   ★「migrations/ を足したら ddl/03 にも1行足す」を、人の記憶に任せない。
+  #     R-21 で 006 を足したとき、ここを足し忘れていて、
+  #     まっさらな新品では起動時の移行が同じ ALTER をもう一度流して
+  #     ERROR 1060 で起動に失敗する状態になっていた（R-23 で見つけた）。
+  #
+  #   ★道具（check_ledger.sh）は 2.2.1 が決めて作ってあったのに、
+  #     「いつ回すか」が決まっていなかったのですり抜けた。
+  #     → db/migrations/ か db/ddl/ に差分がある push のときだけ発火させる。
+  #
+  #   ★まっさらな新品でしか判定できない（使い回したDBだと、
+  #     まだ当てていない番号を「足し忘れ」と誤検知する）。だから毎回 ddl/ から作る。
+  # ----------------------------------------------------------
+  ledger:
+    name: 移行台帳の照合（db に差分があるときだけ）
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: localonly
+          MYSQL_DATABASE: ec
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -plocalonly"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ★ここが発火条件。db/ を触っていない push では、以降の段を飛ばす
+      - id: changed
+        name: db/ に差分があるか
+        run: |
+          base="${{ github.event.before }}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            echo "hit=true" >> "$GITHUB_OUTPUT"     # 初回 push は必ず見る
+          elif git diff --quiet "$base" HEAD -- db/migrations db/ddl; then
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: MySQL を待つ
+        if: steps.changed.outputs.hit == 'true'
+        run: until mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -plocalonly --silent; do sleep 2; done
+
+      # ★まっさらな新品を作る。使い回さない
+      - name: ddl/ だけを流す
+        if: steps.changed.outputs.hit == 'true'
+        working-directory: db
+        run: for f in ddl/*.sql; do mysql -h 127.0.0.1 -uroot -plocalonly < "$f"; done
+
+      - name: 台帳と migrations/ を突き合わせる
+        if: steps.changed.outputs.hit == 'true'
+        working-directory: .
+        env:
+          MYSQL_CMD: "mysql -h 127.0.0.1 -uroot -plocalonly ec"
+        run: bash db/check_ledger.sh
+
+  # ----------------------------------------------------------
+  # main への push だけ。DBを立てる段
+  # ----------------------------------------------------------
+  integration:
+    name: 結合テストと移行台帳
+    if: github.ref == 'refs/heads/main'
+    needs: fast
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: localonly
+          MYSQL_DATABASE: ec
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -plocalonly"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ★TCP で叩く。ソケットだけの一時サーバに当たると、
+      #   DDL の途中で healthy になる（R-01 で実際に踏んだ）
+      - name: MySQL を待つ
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -plocalonly --silent; do sleep 2; done
+
+      - name: 7. ddl と seed を流す
+        working-directory: db
+        run: |
+          for f in ddl/*.sql; do mysql -h 127.0.0.1 -uroot -plocalonly < "$f"; done
+          for f in seed/*.sql; do mysql -h 127.0.0.1 -uroot -plocalonly < "$f"; done
+          mysql -h 127.0.0.1 -uroot -plocalonly < verify.sql
+
+      # ★まっさらな新品で照合する。使い回した DB では意味が無い
+      - name: 8. 移行台帳の照合
+        working-directory: db
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: localonly
+        run: bash check_ledger.sh

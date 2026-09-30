@@ -1,0 +1,92 @@
+# ============================================================
+# .gitignore
+#   設計仕様書 2.5.1（public 化のゲート）／ N-38（秘密をソースに置かない）
+#
+#   ★あとから足しても、すでにコミットしたものは履歴に残る。
+#     だから、リモートを作る前・public にする前ではなく「いま」置く。
+# ============================================================
+
+# --- 秘密。ここが本命 ---
+.env
+.env.*
+!.env.example
+# R-37：★行末にコメントを書かない。gitignore は行の全部を模様として読むので、
+#   「!.env.azure.example      # …」は、そういう名前のファイルを指すことになり、効かなかった
+!.env.azure.example
+
+*.pem
+# ★DigiCert のルート証明書は公開されているもので、秘密ではない（R-37）。
+#   *.pem で落ちると、clone した人が Azure に TLS で繋げない。★「要るものを落とす」ミス
+!certs/*.crt.pem
+*.key
+*.p12
+*.pfx
+secrets.*
+credentials.*
+.azure/
+*.publishsettings
+
+# --- 作業用。リポジトリに入れない ---
+# Gemini で作った画像の受け口（規約名になる前のもの）。★行末コメントは効かないので、必ず行を分ける
+assets/incoming/
+*.bak
+*.bak2
+*.orig
+*.rej
+tmp/
+scratch/
+
+# --- 生成物 ---
+node_modules/
+.next/
+out/
+dist/
+build/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+# TypeScript の差分ビルドの覚え書き（R-38）。★ビルドし直せば作られる中間生成物で、
+#   入れると毎回差分が出る。lib/api/schema.d.ts は CI が「最新か」を見るので入れる
+*.tsbuildinfo
+.coverage
+htmlcov/
+coverage/
+
+# --- DB の実体・ダンプ ---
+*.sql.gz
+*.dump
+db/data/
+mysql-data/
+
+# --- 測定の出力（R-08。生成し直せる） ---
+db/perf/out/
+db/perf/*.csv
+
+# --- ログ ---
+*.log
+logs/
+
+# --- OS・エディタ ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# ============================================================
+# ★入れて「よい」もの（迷いやすいので明記する）
+# ============================================================
+#   docker-compose.yml           … 検証用の値だけ。パスワードは localonly（2.5.1 の4）
+#   db/ddl/*.sql                 … スキーマ。秘密ではない
+#   db/seed/*.sql                … 初期データ。個人情報を入れない
+#   assets/products/*.jpg        … プレースホルダと差し替え済みの画像。SOURCES.md で出どころを追える
+#   .env.example                 … キーの名前だけ書いた見本。値は空にする
+
+# 作業のログと画面の写真は、アプリのリポジトリには入れない（R-37）。
+#   提出用の文書と一緒に置くもの
+docs/reports/
+docs/screenshots/

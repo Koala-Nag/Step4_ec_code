@@ -1,0 +1,233 @@
+:root { --fg:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --bg:#fff; --accent:#1f3864; }
+* { box-sizing: border-box; }
+body { margin:0; font-family: system-ui, "Segoe UI", "Yu Gothic UI", sans-serif;
+       color: var(--fg); background: var(--bg); }
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 64px; }
+header.site { border-bottom:1px solid var(--line); background:#fff; }
+header.site .wrap { padding: 14px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+h1 { font-size: 20px; margin:0; letter-spacing:.02em; }
+.crumb { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+.filters { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:20px; }
+.filters input[type=search] { padding:8px 10px; border:1px solid var(--line); border-radius:6px; min-width:220px; }
+.chip { border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; background:#fff; }
+.chip.on { background: var(--accent); color:#fff; border-color: var(--accent); }
+button.chip { cursor:pointer; }
+.grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:20px; }
+.card img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:8px; border:1px solid var(--line); display:block; }
+.card .nm { margin:8px 0 2px; font-size:14px; line-height:1.4; }
+.card .pr { font-size:14px; font-weight:600; }
+.badge { display:inline-block; font-size:12px; padding:2px 8px; border-radius:4px; margin-top:6px; }
+.badge.in { background:#e8f2e8; color:#1e5c2e; }
+.badge.low { background:#fdf1dc; color:#8a5a00; }
+.badge.out { background:#f1f1f1; color:#6b7280; }
+.pager { margin-top:32px; display:flex; gap:12px; align-items:center; }
+.detail { display:grid; grid-template-columns: minmax(0,420px) 1fr; gap:36px; }
+.detail img.hero { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; border:1px solid var(--line); }
+.swatches { display:flex; gap:10px; margin:12px 0 20px; flex-wrap:wrap; }
+.swatch { width:52px; height:52px; border-radius:6px; border:2px solid transparent; overflow:hidden; padding:0; background:none; cursor:pointer; }
+.swatch img { width:100%; height:100%; object-fit:cover; display:block; }
+.swatch.on { border-color: var(--accent); }
+table.sizes { border-collapse:collapse; width:100%; max-width:460px; }
+table.sizes th, table.sizes td { border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; font-size:14px; }
+table.sizes td.na { color:#b0b0b0; }
+.price { font-size:22px; font-weight:700; margin:6px 0 14px; }
+.meta { color:var(--muted); font-size:13px; line-height:1.9; }
+.empty { color:var(--muted); padding:40px 0; }
+
+/* --- R-15 絞り込みと並び替えを見た目で分ける --- */
+.facet { display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.facet > .lbl { flex:0 0 72px; font-size:12px; color:var(--muted); padding-top:7px; letter-spacing:.08em; }
+.facet > .opts { display:flex; flex-wrap:wrap; gap:8px; }
+/* 絞り込み＝件数が減る。角ばった四角 */
+.f-filter { border:1px solid var(--line); border-radius:4px; padding:6px 12px; font-size:13px; background:#fff; }
+.f-filter.on { background:#1f3864; color:#fff; border-color:#1f3864; }
+/* 並び替え＝件数は変わらず順番だけ。丸い枠線だけ */
+.f-sort { border:1px solid var(--line); border-radius:999px; padding:6px 14px; font-size:13px; background:#fff; color:var(--muted); }
+.f-sort.on { border-color:#1f3864; color:#1f3864; font-weight:600; background:#f4f7fd; }
+.active-cond { display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+  background:#f7f8fa; border:1px solid var(--line); border-radius:6px;
+  padding:10px 14px; margin:16px 0 20px; font-size:13px; }
+.active-cond .k { color:var(--muted); }
+.active-cond .v { font-weight:600; }
+.active-cond .clear { margin-left:auto; color:#1f3864; text-decoration:underline; font-size:13px; }
+.count { font-size:13px; color:var(--muted); margin:0 0 12px; }
+/* サイズの3状態（R-15） */
+table.sizes td.sold { color:#9aa0a6; }        /* 売り切れ：薄い灰色 */
+table.sizes td.none { color:#5f6368; background:#f1f3f4; }  /* そもそも無い：濃い灰色 */
+.cartbox { border:1px solid var(--line); border-radius:8px; padding:16px; margin-top:22px; }
+.cartbox select, .cartbox input { padding:7px 10px; border:1px solid var(--line); border-radius:6px; }
+.btn { background:#1f3864; color:#fff; border:none; border-radius:6px; padding:10px 18px; font-size:14px; cursor:pointer; }
+.btn:disabled { background:#c9ced6; cursor:not-allowed; }
+.btn.sub { background:#fff; color:#1f3864; border:1px solid #1f3864; padding:6px 12px; font-size:13px; }
+.cartrow { display:grid; grid-template-columns:88px 1fr auto; gap:16px; padding:16px 0; border-bottom:1px solid var(--line); align-items:center; }
+.cartrow img { width:88px; aspect-ratio:3/4; object-fit:cover; border-radius:6px; border:1px solid var(--line); }
+.sumtable { width:100%; max-width:380px; border-collapse:collapse; margin-top:18px; }
+.sumtable td { padding:8px 4px; font-size:14px; }
+.sumtable td:last-child { text-align:right; }
+.sumtable tr.total td { border-top:2px solid var(--fg); font-size:18px; font-weight:700; padding-top:12px; }
+.freeship { background:#fdf1dc; color:#8a5a00; border-radius:6px; padding:10px 14px; font-size:13px; margin-top:14px; }
+.card .sizerange { font-size:12px; color:var(--muted); margin:4px 0 0; letter-spacing:.02em; }
+.steps { display:flex; gap:0; list-style:none; padding:0; margin:0 0 22px; font-size:13px; }
+.steps li { padding:8px 18px; background:#f1f3f4; color:var(--muted); border-radius:4px; margin-right:8px; }
+.steps li.on { background:#1f3864; color:#fff; font-weight:600; }
+.steps li.done { background:#e8f2e8; color:#1e5c2e; }
+.fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin:10px 0 6px; }
+.fields label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
+.fields input { padding:8px 10px; border:1px solid var(--line); border-radius:6px; font-size:14px; color:var(--fg); }
+.result { border-radius:8px; padding:22px 24px; }
+.result.ok { background:#e8f2e8; color:#1e5c2e; }
+.result.warn { background:#fdf1dc; color:#8a5a00; }
+
+/* ------------------------------------------------------------
+   認証まわりの画面（R-21）。★1列のフォームだけ。装飾は足さない
+   ------------------------------------------------------------ */
+.wrap.narrow { max-width: 420px; }
+.wrap.narrow h1 { font-size: 20px; margin: 24px 0 16px; }
+
+.form { display: flex; flex-direction: column; gap: 14px; margin: 16px 0 20px; }
+.form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.form input {
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px;
+  font-size: 15px; color: var(--fg); background: #fff;
+}
+.form button {
+  padding: 12px 16px; border: 0; border-radius: 6px;
+  background: #1f3864; color: #fff; font-size: 15px; cursor: pointer;
+}
+
+.err { padding: 10px 12px; border-radius: 6px; background: #fdecec; color: #8a1f1f; font-size: 14px; }
+.ok  { padding: 10px 12px; border-radius: 6px; background: #e8f2e8; color: #1e5c2e; font-size: 14px; }
+.note { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.links { font-size: 14px; display: flex; gap: 10px; }
+.account { margin-left: 16px; font-size: 14px; }
+.account form { display: inline; }
+.account button {
+  background: none; border: 0; padding: 0; color: inherit;
+  font-size: 14px; cursor: pointer; text-decoration: underline;
+}
+
+/* ------------------------------------------------------------
+   購入履歴・注文詳細（R-22。串の⑩）
+   ------------------------------------------------------------ */
+.h1 { font-size: 20px; margin: 18px 0 14px; }
+.h2 { font-size: 16px; margin: 26px 0 10px; }
+
+table.orders { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 18px; }
+table.orders th, table.orders td {
+  border-bottom: 1px solid var(--line); padding: 10px 8px; text-align: left; vertical-align: top;
+}
+table.orders thead th { color: var(--muted); font-weight: 600; font-size: 12px; }
+table.orders .num { text-align: right; white-space: nowrap; }
+table.orders small { color: var(--muted); }
+
+table.sum { border-collapse: collapse; font-size: 14px; margin: 0 0 8px auto; min-width: 260px; }
+table.sum th, table.sum td { padding: 6px 10px; text-align: left; }
+table.sum th { color: var(--muted); font-weight: 500; }
+table.sum .num { text-align: right; }
+table.sum tr.total th, table.sum tr.total td { font-weight: 700; border-top: 1px solid var(--line); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px;
+         background: #eef2f8; color: #1f3864; font-size: 12px; }
+.can { color: var(--muted); }
+
+/* ------------------------------------------------------------
+   運営の画面（R-22）。★客の画面と見た目を分ける
+   ------------------------------------------------------------ */
+.adminbar { background: #1f3864; color: #fff; padding: 10px 0; margin-bottom: 8px; }
+.adminbar .wrap { display: flex; align-items: center; gap: 18px; }
+.adminbar a { color: #cfe0ff; font-size: 14px; }
+.adminbar strong { font-size: 15px; }
+
+button.mini {
+  padding: 6px 10px; border: 0; border-radius: 5px;
+  background: #1f3864; color: #fff; font-size: 12px; cursor: pointer;
+}
+.shipform { display: flex; flex-direction: column; gap: 5px; min-width: 190px; }
+.shipform input {
+  padding: 5px 7px; border: 1px solid var(--line); border-radius: 4px; font-size: 12px;
+}
+/* R-26 キャンセル・欠品 */
+.cancelbox { border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-top:22px; }
+form.inline { display:inline; margin-left:8px; }
+.shortbox { margin-top:6px; font-size:13px; }
+.shortbox summary { cursor:pointer; color:#8a5a00; }
+.shortline { display:block; margin:4px 0; }
+.actions { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }
+.actions form { border:1px solid var(--line); border-radius:8px; padding:12px 14px; max-width:360px; }
+/* R-27 運営の入力画面 */
+.gridform { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px; margin:12px 0 20px; }
+.gridform label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
+.gridform label.wide { grid-column: 1 / -1; }
+.gridform input, .gridform select, .gridform textarea, .rowform input, .rowform select { padding:6px 8px; border:1px solid var(--line); border-radius:5px; font-size:14px; }
+.gridform button { align-self:end; }
+.rowform { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+tr.inactive td { color:#9aa0a6; }
+.tabs { display:flex; gap:14px; margin:6px 0 10px; }
+.skuform fieldset { border:1px solid var(--line); border-radius:6px; margin:8px 0; padding:8px 12px; }
+.skuform label { margin-right:12px; font-size:14px; white-space:nowrap; }
+.scrollx { overflow-x:auto; }
+.imggrid { display:flex; flex-wrap:wrap; gap:18px; margin:12px 0; }
+.imgcol { display:flex; flex-direction:column; gap:6px; }
+.imgcol figure { margin:0; }
+.imgcol img { width:120px; aspect-ratio:3/4; object-fit:cover; border:1px solid var(--line); border-radius:6px; display:block; }
+.imgcol figcaption { font-size:12px; display:flex; gap:4px; align-items:center; margin-top:4px; }
+table.policy th { text-align:left; white-space:nowrap; vertical-align:top; padding-right:16px; }
+/* R-28 客の導線 */
+.brand { font-weight:800; font-size:20px; letter-spacing:.12em; color:var(--fg); text-decoration:none; }
+.gnav { display:flex; gap:16px; font-size:14px; }
+.gnav a { color:var(--fg); text-decoration:none; }
+.gnav a:hover { text-decoration:underline; }
+nav.account { margin-left:auto; display:flex; align-items:center; gap:14px; font-size:14px; }
+nav.account .who { color:var(--muted); }
+nav.account form { display:inline; }
+nav.account .cartlink { border:1px solid var(--fg); border-radius:999px; padding:4px 14px; text-decoration:none; color:var(--fg); }
+nav.account .opmenu { color:#8a5a00; }
+footer.site { border-top:1px solid var(--line); margin-top:48px; background:#fafafa; }
+footer.site .wrap { padding:22px 20px 30px; }
+footer.site nav { display:flex; flex-wrap:wrap; gap:18px; font-size:13px; }
+footer.site nav a { color:var(--fg); }
+footer.site .copy { color:var(--muted); font-size:12px; margin:14px 0 0; }
+.hero { background:#f3f4f6; border-radius:12px; padding:36px 32px; margin:8px 0 28px; }
+.hero h1 { font-size:26px; margin:0 0 8px; }
+.hero p { color:var(--muted); margin:0 0 18px; }
+.herosearch { display:flex; gap:8px; max-width:520px; }
+.herosearch input { flex:1; padding:10px 12px; border:1px solid var(--line); border-radius:6px; font-size:15px; }
+.cats { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:12px; margin-bottom:28px; }
+.cat { display:flex; flex-direction:column; gap:4px; border:1px solid var(--line); border-radius:10px; padding:16px; text-decoration:none; color:var(--fg); }
+.cat:hover { border-color:var(--fg); }
+.cat span { color:var(--muted); font-size:12px; }
+.sechead { display:flex; align-items:baseline; justify-content:space-between; }
+.guide { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:16px; margin-top:36px; }
+.guide > div { border-top:2px solid var(--fg); padding-top:10px; font-size:14px; }
+.guide p { margin:6px 0 0; color:var(--muted); }
+.card { position:relative; }
+.badge.new { position:absolute; top:8px; left:8px; margin:0; background:#1a1a1a; color:#fff; }
+.noimg { width:100%; aspect-ratio:3/4; background:#f3f4f6; border-radius:8px; }
+.loading { color:var(--muted); font-size:14px; }
+.skel .skimg, .skimg { width:100%; aspect-ratio:3/4; background:#eef0f3; border-radius:8px; animation:pulse 1.2s ease-in-out infinite; }
+.skimg.tall { max-width:420px; }
+.skline { height:14px; background:#eef0f3; border-radius:4px; margin:10px 0; animation:pulse 1.2s ease-in-out infinite; }
+.skline.short { width:40%; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+.btn:disabled[aria-busy="true"] { cursor:progress; }
+.doc h2 { font-size:16px; margin:22px 0 6px; }
+.doc p { line-height:1.8; }
+/* R-28 注文詳細｜金額の表だけ右寄せ。届け先・返品条件は左から読む */
+table.sum.info, table.sum.policy { margin-left: 0; }
+/* R-29 クーポン・対応メモ */
+.couponbox { border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-top:18px; max-width:520px; }
+.couponbox .rowform input { padding:8px 10px; border:1px solid var(--line); border-radius:6px; }
+.memoform { display:flex; flex-direction:column; gap:8px; max-width:640px; margin-bottom:12px; }
+.memoform textarea { padding:8px 10px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+.memoform button { align-self:flex-start; }
+ul.memos { list-style:none; padding:0; margin:0 0 20px; max-width:760px; }
+ul.memos li { border-left:3px solid var(--line); padding:4px 12px; margin:8px 0; }
+ul.memos li p { margin:4px 0 0; white-space:pre-wrap; }
+
+a.btn { display:inline-block; text-decoration:none; }
+a.mini { display:inline-block; padding:6px 10px; border-radius:5px; background:#1f3864; color:#fff; font-size:12px; text-decoration:none; margin-left:8px; }
+/* R-32 入力欄の中のチェック・ラジオ（営業曜日・クーポンの対象） */
+.gridform fieldset.wide { grid-column: 1 / -1; border:1px solid var(--line); border-radius:6px; padding:8px 12px; font-size:13px; }
+.gridform fieldset label { display:inline-flex; flex-direction:row; align-items:center; gap:4px; margin:2px 12px 2px 0; color:inherit; }
+.gridform fieldset input[type=checkbox], .gridform fieldset input[type=radio] { padding:0; }

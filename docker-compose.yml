@@ -1,0 +1,24 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: ec-db
+    environment:
+      MYSQL_ROOT_PASSWORD: localonly
+      MYSQL_DATABASE: ec_koala
+      TZ: Asia/Tokyo
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+      --default-time-zone=+09:00
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./db/ddl:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-plocalonly"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  dbdata:
